@@ -552,8 +552,8 @@ static void __init set_volt_table_CA7(void)
 		max_support_idx_CA7 = L4;
 		min_support_idx_CA7 = L13;
 	} else {
-		max_support_idx_CA7 = L2;
-		min_support_idx_CA7 = L10;
+		max_support_idx_CA7 = L0;
+		min_support_idx_CA7 = L13;
 	}
 }
 
