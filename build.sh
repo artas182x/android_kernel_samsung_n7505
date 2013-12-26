@@ -1,4 +1,7 @@
 #!/bin/bash
+export USE_CCACHE=1
+export CCACHE_DIR=/home/artur/.ccache
+ccache -M20
 echo "Cleaning after last build"
 make clean
 echo "Preparing for build"
