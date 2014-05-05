@@ -20,9 +20,7 @@
 #include <linux/earlysuspend.h>
 #endif
 #include <plat/mipi_dsi.h>
-#ifdef CONFIG_POWERSUSPEND
-#include <linux/powersuspend.h>
-#endif
+
 
 #define GAMMA_PARAM_SIZE 26
 #define MAX_BRIGHTNESS 255
@@ -187,17 +185,11 @@ static void init_lcd(struct mipi_dsim_device *dsim)
 static int d6ea8061_displayon(struct mipi_dsim_device *dsim)
 {
 	init_lcd(dsim);
-	#ifdef CONFIG_POWERSUSPEND
- set_power_suspend_state_pannel_hook(POWER_SUSPEND_INACTIVE); // Yank555.lu : add hook to handle powersuspend tasks (wakeup)
-#endif
 	return 1;
 }
 
 static int d6ea8061_suspend(struct mipi_dsim_device *dsim)
 {
-	#ifdef CONFIG_POWERSUSPEND
- set_power_suspend_state_pannel_hook(POWER_SUSPEND_ACTIVE); // Yank555.lu : add hook to handle powersuspend tasks (sleep)
-#endif
 	return 1;
 }
 
