@@ -385,14 +385,16 @@ static int soc_pcm_close(struct snd_pcm_substream *substream)
 		} else {
 			/* start delayed pop wq here for playback streams */
 			codec_dai->pop_wait = 1;
-			schedule_delayed_work(&rtd->delayed_work,
-				msecs_to_jiffies(rtd->pmdown_time));
+			queue_delayed_work(system_power_efficient_wq,
+					   &rtd->delayed_work,
+					   msecs_to_jiffies(rtd->pmdown_time));
 		}
 	} else {
 #ifdef CONFIG_SND_SOC_SAMSUNG_SMDK_WM8994
 		codec_dai->pop_wait = 1;
-		schedule_delayed_work(&rtd->delayed_work,
-			msecs_to_jiffies(rtd->pmdown_time));
+		queue_delayed_work(system_power_efficient_wq,
+					   &rtd->delayed_work,
+					   msecs_to_jiffies(rtd->pmdown_time));
 #else
 		/* capture streams can be powered down now */
 		snd_soc_dapm_stream_event(rtd, SNDRV_PCM_STREAM_CAPTURE,
