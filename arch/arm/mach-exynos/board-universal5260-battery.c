@@ -56,7 +56,7 @@ static struct s3c_adc_client *adc_client;
 /* static unsigned int sec_bat_recovery_mode; */
 
 bool is_wpc_cable_attached;
-extern int system_rev;
+extern unsigned int system_rev;
 bool is_ovlo_state;
 
 /* For TEMP*/
