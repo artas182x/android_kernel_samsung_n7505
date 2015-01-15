@@ -192,8 +192,7 @@ SUBARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ \
 # Default value for CROSS_COMPILE is not to prefix executables
 # Note: Some architectures assign CROSS_COMPILE in their arch/*/Makefile
 export KBUILD_BUILDHOST := $(SUBARCH)
-ARCH		?=arm
-CROSS_COMPILE	?=/opt/toolchains/arm-eabi-4.6/bin/arm-eabi-
+ARCH		?= $(SUBARCH)
 
 # Architecture as present in compile.h
 UTS_MACHINE 	:= $(ARCH)
@@ -331,9 +330,9 @@ include $(srctree)/scripts/Kbuild.include
 AS		= $(CROSS_COMPILE)as
 LD		= $(CROSS_COMPILE)ld
 ifeq ($(USE_CCACHE),1)
- CC = ccache $(CROSS_COMPILE)gcc
+  CC		= ccache $(CROSS_COMPILE)gcc
 else
- CC = $(CROSS_COMPILE)gcc
+  CC		= $(CROSS_COMPILE)gcc
 endif
 CPP		= $(CC) -E
 AR		= $(CROSS_COMPILE)ar
@@ -351,9 +350,9 @@ CHECK		= sparse
 
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 		  -Wbitwise -Wno-return-void $(CF)
-CFLAGS_MODULE   =
+CFLAGS_MODULE   = -fno-pic
 AFLAGS_MODULE   =
-LDFLAGS_MODULE  =
+LDFLAGS_MODULE  = --strip-debug
 CFLAGS_KERNEL	=
 AFLAGS_KERNEL	=
 CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage
@@ -368,13 +367,13 @@ LINUXINCLUDE    := -I$(srctree)/arch/$(hdr-arch)/include \
 
 KBUILD_CPPFLAGS := -D__KERNEL__
 
-KBUILD_CFLAGS := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
+KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -Werror-implicit-function-declaration \
-		   -Wno-format-security \
+		   -Wno-format-security -Wno-unused \
 		   -fno-strict-aliasing -fno-common \
-	-fno-delete-null-pointer-checks -ffast-math -pipe \
-	-marm -mtune=cortex-a15 -mfpu=neon-vfpv4 \
-	--sysroot=$(SYSROOT)
+		   -fno-delete-null-pointer-checks -ffast-math -pipe \
+		   -marm -mtune=cortex-a15 -mfpu=neon-vfpv4 \
+		   --sysroot=$(SYSROOT)
 
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
@@ -645,6 +644,12 @@ KBUILD_ARFLAGS := $(call ar-option,D)
 # check for 'asm goto'
 ifeq ($(shell $(CONFIG_SHELL) $(srctree)/scripts/gcc-goto.sh $(CC)), y)
 	KBUILD_CFLAGS += -DCC_HAVE_ASM_GOTO
+endif
+
+#Disable the whole of the following block to disable LKM AUTH
+ifeq ($(TIMA_ENABLED),1)
+       KBUILD_CFLAGS += -DTIMA_LKM_AUTH_ENABLED -Idrivers/gud/MobiCoreKernelApi/include/
+       KBUILD_AFLAGS += -DTIMA_LKM_AUTH_ENABLED
 endif
 
 # Add user supplied CPPFLAGS, AFLAGS and CFLAGS as the last assignments
