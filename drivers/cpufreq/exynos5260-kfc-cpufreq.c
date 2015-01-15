@@ -550,10 +550,10 @@ static void __init set_volt_table_CA7(void)
 
 	if (samsung_rev() == EXYNOS5260_REV_0) {
 		max_support_idx_CA7 = L4;
-		min_support_idx_CA7 = L11;
+		min_support_idx_CA7 = L12;
 	} else {
 		max_support_idx_CA7 = L0;
-		min_support_idx_CA7 = L11;
+		min_support_idx_CA7 = L12;
 	}
 }
 
