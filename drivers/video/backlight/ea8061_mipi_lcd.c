@@ -61,6 +61,12 @@
 #define LDI_DATE_REG			0xC8
 #define LDI_DATE_LEN			42
 
+#define LDI_BURST_SIZE		128
+#define LDI_PARAM_MSB		0xB1
+#define LDI_MDNIE_SIZE		136
+#define MDNIE_FIRST_SIZE	82
+#define MDNIE_SECOND_SIZE	54
+
 #define LDI_MPS_REG			0xD4
 #define LDI_MPS_LEN			18
 #define MPS_PARAM_SIZE		(LDI_MPS_LEN + 1)	/* REG + 18 para */
@@ -106,6 +112,8 @@ struct lcd_info {
 
 	struct mipi_dsim_device		*dsim;
 };
+
+static struct lcd_info *g_lcd;
 
 static void dump_register(void __iomem *reg, u32 pa, u32 end_offset)
 {
@@ -1124,6 +1132,116 @@ static int update_brightness(struct lcd_info *lcd, u8 force)
 	return 0;
 }
 
+static int ea8061_mdnie_enable(struct lcd_info *lcd, int onoff)
+{
+	int ret;
+
+	ret = ea8061_write(lcd, SEQ_MDNIE_EN_B0, ARRAY_SIZE(SEQ_MDNIE_EN_B0));
+	if (ret < ARRAY_SIZE(SEQ_MDNIE_EN_B0))
+		goto enable_err;
+
+	ret = ea8061_write(lcd, SEQ_MDNIE_EN, ARRAY_SIZE(SEQ_MDNIE_EN));
+	if (ret < ARRAY_SIZE(SEQ_MDNIE_EN))
+		goto enable_err;
+
+	return ret;
+
+enable_err:
+	dev_err(&lcd->ld->dev, "%s onoff=%d fail\n", __func__, onoff);
+	return ret;
+}
+
+static void ea8061_read_mdnie(struct lcd_info *lcd)
+{
+	int ret;
+	int i;
+	u8 buf[LDI_MDNIE_SIZE];
+
+	dev_info(&lcd->ld->dev, "%s\n", __func__);
+
+	ea8061_write(lcd, SEQ_MDNIE_START_B0, ARRAY_SIZE(SEQ_MDNIE_START_B0));
+	msleep(120);
+
+	ret = ea8061_read(lcd, 0xBA, buf, LDI_MDNIE_SIZE);
+	if (ret < 1) {
+		dev_info(&lcd->ld->dev, "panel is not connected well\n");
+	}
+
+	for (i=0; i < 136; i++)
+		pr_info(" %02d = 0x%02x\n", i, buf[i]);
+
+}
+
+static int ea8061_write_mdnie(struct lcd_info *lcd,
+		const unsigned short *seq, int size)
+{
+	int ret;
+	unsigned char buf[LDI_BURST_SIZE];
+	int send_len;
+	int i;
+
+	buf[0] = 0xB0;
+	buf[1] = (unsigned char) (seq[0] & 0xff);
+	dev_dbg(&lcd->ld->dev, "[0x%02x][0x%02x]\n", buf[0], buf[1]);
+
+	ret = ea8061_write(lcd, buf, 2);
+	if (ret < 2)
+		return -EINVAL;
+
+	buf[0] = ((seq[0] >> 8) & 0xff) + LDI_PARAM_MSB;
+	for ( i = 0; i < size; i++)
+		buf[i+1] = (unsigned char)(seq[i*2+1] & 0xff);
+
+	send_len = size + 1; /* addr data */
+	for (i=0; i < send_len; i++)
+		dev_dbg(&lcd->ld->dev, "%s : [%02d] = 0x%02x\n", __func__, i, buf[i]);
+
+	ret = ea8061_write(lcd, buf, send_len);
+
+	if (ret < send_len)
+		return -EINVAL;
+
+	return size;
+}
+
+int mdnie_lite_write(const unsigned short *seq, int size)
+{
+	struct lcd_info *lcd = g_lcd;
+	int ret;
+
+	if (!lcd->connected)
+		return -EINVAL;
+
+	if (IS_ERR_OR_NULL(seq)) {
+		dev_err(&lcd->ld->dev, "mdnie sequence is null\n");
+		return -EPERM;
+	}
+
+	if (LDI_MDNIE_SIZE != size) {
+		dev_err(&lcd->ld->dev, "mdnie sequence size error (%d)\n", size);
+		return -EPERM;
+	}
+
+	ret = ea8061_write_mdnie(lcd, seq, MDNIE_FIRST_SIZE);
+	if (ret != MDNIE_FIRST_SIZE) {
+		dev_err(&lcd->ld->dev, "MDNIE first param write error\n");
+		return -EINVAL;
+	}
+
+	msleep(17*2); /* wait 1 frame */
+
+	ret = ea8061_write_mdnie(lcd,
+		seq + MDNIE_FIRST_SIZE * 2, MDNIE_SECOND_SIZE);
+
+	if (ret != MDNIE_SECOND_SIZE) {
+		dev_err(&lcd->ld->dev, "MDNIE second param write error\n");
+		return -EINVAL;
+	}
+
+	return size;
+}
+
+
 static int ea8061_ldi_init(struct lcd_info *lcd)
 {
 	int ret = 0;
@@ -1144,6 +1262,10 @@ static int ea8061_ldi_init(struct lcd_info *lcd)
 	ea8061_write(lcd, SEQ_ACL_SET, ARRAY_SIZE(SEQ_ACL_SET));
 #endif
 	ea8061_write(lcd, SEQ_SLEEP_OUT, ARRAY_SIZE(SEQ_SLEEP_OUT));
+
+	#if defined(CONFIG_FB_S5P_MDNIE_LITE)
+	ea8061_mdnie_enable(lcd, 1);
+#endif
 
 	return ret;
 }

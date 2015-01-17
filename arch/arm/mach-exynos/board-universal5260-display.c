@@ -548,3 +548,4 @@ void __init exynos5_universal5260_display_init(void)
 		pr_err("failed to find bootloader fb resource\n");
 	}
 }
+

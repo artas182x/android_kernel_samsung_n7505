@@ -226,6 +226,22 @@ static const unsigned char SEQ_ACL_50[] = {
 	0x03, 0x00
 };
 
+/* 545h, 03h */
+static const unsigned char SEQ_MDNIE_EN_B0[] = {
+	 0xB0,
+	 0x45
+};
+
+static const unsigned char SEQ_MDNIE_EN[] = {
+	 0xB6,
+	 0x03
+};
+
+static const unsigned char SEQ_MDNIE_START_B0[] = {
+	 0xB0,
+	 0x82
+};
+
 static const unsigned char *ACL_CUTOFF_TABLE[ACL_STATUS_MAX] = {
 	SEQ_ACL_OFF,
 	SEQ_ACL_30,

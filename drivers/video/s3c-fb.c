@@ -41,6 +41,7 @@
 #include <mach/map.h>
 #include <mach/bts.h>
 #include <plat/regs-fb-v4.h>
+#include <plat/regs-fb.h>
 #include <plat/fb.h>
 #include <plat/cpu.h>
 #include <plat/clock.h>
