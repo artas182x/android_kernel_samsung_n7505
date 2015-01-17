@@ -42,7 +42,7 @@ typedef enum {
 #define G3D_MAX_FREQ    600000
 #define G3D_MIN_FREQ    160000
 #elif SOC_NAME == 5260
-#define G3D_MAX_FREQ    480000
+#define G3D_MAX_FREQ    667000
 #define G3D_MIN_FREQ    160000
 #else
 #error SOC_NAME should be specified.
